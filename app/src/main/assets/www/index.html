@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1d33">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>بصمتي · مختبر الأسرة</title>
+<style>
+:root{--navy:#0b1d33;--navy2:#132b47;--gold:#c9a45c;--gold2:#e8cf96;--ink:#f4efe4;--mut:#9fb0c3;--ok:#3fbf8f;--bad:#e5676b;--r:20px}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{font-family:Tahoma,"Segoe UI",system-ui,sans-serif;color:var(--ink);min-height:100vh;
+background:radial-gradient(900px 500px at 85% -10%,#20436e 0,transparent 60%),radial-gradient(700px 400px at 0% 110%,#17324f 0,transparent 60%),var(--navy);
+padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom)}
+.wrap{max-width:460px;margin:auto;padding:22px 0 40px}
+.brand{text-align:center}
+.logo{width:64px;height:64px;margin:0 auto 10px;border-radius:20px;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 8px 24px rgba(201,164,92,.35)}
+.brand h1{font-size:32px;color:var(--gold2);letter-spacing:.5px}
+.brand p{color:var(--mut);font-size:12.5px;margin-top:6px}
+.clock{margin:24px auto 4px;text-align:center;font-size:46px;font-weight:700;font-variant-numeric:tabular-nums;direction:ltr;letter-spacing:2px}
+.date{text-align:center;color:var(--mut);font-size:14px}
+.sync{text-align:center;font-size:12px;margin-top:8px;color:var(--mut)}
+.center{text-align:center;margin-top:12px}
+.badge{display:inline-block;padding:6px 16px;border-radius:999px;font-size:13px}
+.open{background:rgba(63,191,143,.15);color:var(--ok)}
+.closed{background:rgba(229,103,107,.15);color:var(--bad)}
+.card{background:linear-gradient(160deg,var(--navy2),#0e2238);border:1px solid rgba(201,164,92,.25);border-radius:var(--r);padding:20px;margin-top:18px;box-shadow:0 12px 32px rgba(0,0,0,.35)}
+h2{font-size:17px;color:var(--gold2);margin-bottom:10px}
+select,input{width:100%;padding:14px;border-radius:14px;border:1px solid rgba(201,164,92,.35);background:#0a1a2c;color:var(--ink);font-size:16px;margin-top:10px;font-family:inherit;outline:none}
+select:focus,input:focus{border-color:var(--gold)}
+button{font-family:inherit;cursor:pointer;border:0;border-radius:14px;padding:14px;font-size:15.5px;font-weight:700;width:100%;margin-top:12px;transition:transform .15s,opacity .2s}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.35;cursor:not-allowed}
+.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--navy)}
+.ghost{background:transparent;color:var(--gold2);border:1px solid rgba(201,164,92,.5)}
+.danger{background:transparent;color:var(--bad);border:1px solid rgba(229,103,107,.5)}
+.fp{width:104px;height:104px;border-radius:50%;margin:8px auto 4px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,rgba(201,164,92,.28),transparent 70%);border:2px solid var(--gold);font-size:50px;cursor:pointer}
+.or{text-align:center;color:var(--mut);font-size:12px;margin:12px 0 0}
+video{width:100%;border-radius:16px;background:#000;margin-top:6px}
+.msg{margin-top:12px;text-align:center;font-size:14px;min-height:20px;line-height:1.7}
+.ok{color:var(--ok)} .err{color:var(--bad)}
+.hidden{display:none!important}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:14px}
+.row small{color:var(--mut);font-size:12px;display:block;margin-top:2px;direction:ltr;text-align:right}
+.tag{font-size:12px;padding:3px 10px;border-radius:999px}
+.in{background:rgba(63,191,143,.15);color:var(--ok)}
+.out{background:rgba(201,164,92,.15);color:var(--gold2)}
+.thumb{width:44px;height:44px;border-radius:10px;object-fit:cover}
+.small{font-size:12px;color:var(--mut);line-height:1.8;margin-top:8px}
+.overlay{position:fixed;inset:0;background:var(--navy);overflow:auto;z-index:50;padding:0 16px}
+.dir{direction:ltr;text-align:left}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <div class="logo">👆</div>
+    <h1>بصمتي</h1>
+    <p>مختبر الأسرة للتحليلات المرضية · نظام الحضور والانصراف</p>
+  </div>
+
+  <div class="clock" id="clock">--:--:--</div>
+  <div class="date" id="date">—</div>
+  <div class="sync" id="sync">جارٍ مزامنة التوقيت...</div>
+  <div class="center"><span class="badge closed" id="win">—</span></div>
+
+  <div class="card" id="empCard">
+    <h2>تسجيل الحضور أو الانصراف</h2>
+    <select id="emp"><option value="">— اختر الموظف —</option></select>
+
+    <div id="action" class="hidden">
+      <p class="small" id="actInfo"></p>
+      <div id="fpBox" class="hidden">
+        <div class="fp" id="fpBtn" title="البصمة">👆</div>
+        <button class="gold" id="fpGo">التحقق بالبصمة</button>
+        <p class="or" id="pinOr">أو</p>
+      </div>
+      <div id="pinBox" class="hidden">
+        <input id="pin" type="password" inputmode="numeric" maxlength="8" placeholder="الرمز السري" autocomplete="off">
+        <button class="gold" id="pinGo">تأكيد الرمز</button>
+      </div>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card hidden" id="camCard">
+    <h2>صورة التحقق</h2>
+    <p class="small">ستُلتقط صورة موثّقة بالوقت والموقع ثم تُرسل تلقائياً.</p>
+    <video id="vid" autoplay playsinline muted></video>
+    <button class="gold" id="snap">التقاط وإرسال</button>
+    <button class="ghost" id="cancel">إلغاء</button>
+  </div>
+
+  <div class="card" id="todayCard">
+    <h2>سجل اليوم</h2>
+    <div id="today"><p class="small">لا توجد سجلات بعد.</p></div>
+  </div>
+
+  <button class="ghost" id="adminBtn" style="margin-top:22px">لوحة التحكم</button>
+  <canvas id="cv" class="hidden"></canvas>
+</div>
+
+<!-- لوحة التحكم -->
+<div class="overlay hidden" id="admin">
+  <div class="wrap">
+    <div class="brand" style="display:flex;justify-content:space-between;align-items:center">
+      <h1 style="font-size:22px">لوحة التحكم</h1>
+      <button class="ghost" id="closeAdmin" style="width:auto;padding:8px 16px;margin:0">إغلاق</button>
+    </div>
+
+    <div id="setup" class="card hidden">
+      <h2>إعداد كلمة مرور المدير</h2>
+      <input id="apw1" type="password" placeholder="كلمة المرور الجديدة">
+      <input id="apw2" type="password" placeholder="تأكيد كلمة المرور">
+      <button class="gold" id="setupGo">حفظ</button>
+    </div>
+
+    <div id="login" class="card hidden">
+      <h2>تسجيل الدخول</h2>
+      <input id="apw" type="password" placeholder="كلمة مرور المدير">
+      <button class="gold" id="loginGo">دخول</button>
+      <div class="msg err" id="loginMsg"></div>
+    </div>
+
+    <div id="panel" class="hidden">
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="gold" id="tabStaff" style="margin:0">الموظفون والسجل</button>
+        <button class="ghost" id="tabSal" style="margin:0">الرواتب</button>
+      </div>
+      <div class="card">
+        <h2>إضافة موظف</h2>
+        <input id="newName" placeholder="اسم الموظف">
+        <input id="newPin" type="password" inputmode="numeric" maxlength="8" placeholder="الرمز السري (أرقام)">
+        <button class="gold" id="addEmp">إضافة</button>
+      </div>
+
+      <div class="card">
+        <h2>الموظفون</h2>
+        <div id="empList"></div>
+      </div>
+
+      <div class="card">
+        <h2>سجل الحضور والانصراف</h2>
+        <div id="recList"></div>
+        <button class="ghost" id="verifyChain">التحقق من سلامة السجل</button>
+        <button class="ghost" id="exportCsv">تصدير CSV</button>
+        <div class="msg" id="chainMsg"></div>
+      </div>
+
+      <div class="card">
+        <h2>تغيير كلمة مرور المدير</h2>
+        <input id="npw" type="password" placeholder="كلمة مرور جديدة">
+        <button class="ghost" id="changePw">تغيير</button>
+      </div>
+    </div>
+
+    <div id="salaryPanel" class="hidden">
+      <button class="ghost" id="tabStaff2" style="margin-top:16px">← الموظفون والسجل</button>
+
+      <div class="card" id="saLock">
+        <h2>قسم الرواتب محمي</h2>
+        <p class="small">أدخل الرمز السري للدخول إلى قسم الرواتب.</p>
+        <input id="saCode" type="password" placeholder="الرمز السري" autocomplete="off">
+        <button class="gold" id="saGo">فتح</button>
+        <div class="msg err" id="saMsg"></div>
+      </div>
+
+      <div id="saBody" class="hidden">
+        <div class="card">
+          <h2>إعدادات الحساب</h2>
+          <input id="saRate" type="number" step="any" min="0" placeholder="سعر الدقيقة الواحدة">
+          <input id="saAbsMin" type="number" step="any" min="0" placeholder="خصم يوم الغياب بالدقائق (0 = بدون خصم)">
+          <button class="gold" id="saSave">حفظ الإعدادات</button>
+        </div>
+
+        <div class="card">
+          <h2>احتساب الراتب</h2>
+          <select id="saPeriod">
+            <option value="day">يومي</option>
+            <option value="week">أسبوعي (آخر 7 أيام)</option>
+            <option value="month">شهري</option>
+          </select>
+          <input id="saDate" type="date">
+          <button class="gold" id="saCalc">احسب</button>
+        </div>
+
+        <div class="card">
+          <h2>النتائج</h2>
+          <div id="saOut"><p class="small">اختر الفترة واضغط احسب.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= أدوات عامة ================= */
+const $ = id => document.getElementById(id);
+const TZ = 'Asia/Baghdad';
+const enc = new TextEncoder();
+const DB = {
+  get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch { return d; } },
+  set(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const rnd = n => crypto.getRandomValues(new Uint8Array(n));
+async function sha(s) {
+  const b = await crypto.subtle.digest('SHA-256', enc.encode(s));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+const bufToB64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const b64ToBuf = s => Uint8Array.from(atob(s), c => c.charCodeAt(0)).buffer;
+
+/* ================= توقيت بغداد (من الخادم فقط) =================
+   لا نعتمد على ساعة الجهاز أبداً: نأخذ الوقت من خادم توقيت خارجي،
+   ثم نحسب الوقت لاحقاً بالساعة الداخلية المستقلة (performance.now)
+   التي لا تتأثر بتغيير ساعة الجهاز. */
+let base = null, baseMark = 0, synced = false;
+async function syncTime() {
+  try {
+    const r = await fetch('https://worldtimeapi.org/api/timezone/Asia/Baghdad', { cache: 'no-store' });
+    if (!r.ok) throw new Error();
+    const j = await r.json();
+    base = Date.parse(j.datetime);
+    baseMark = performance.now();
+    synced = !isNaN(base);
+  } catch { synced = false; }
+  renderClock();
+}
+const now = () => synced ? base + (performance.now() - baseMark) : null;
+
+function parts(t, opts) {
+  return new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour12: false, ...opts })
+    .formatToParts(new Date(t)).reduce((o, p) => (o[p.type] = p.value, o), {});
+}
+const minutesOf = t => { const p = parts(t, { hour: '2-digit', minute: '2-digit' }); return (+p.hour % 24) * 60 + +p.minute; };
+const WIN_START = 15 * 60 + 30, WIN_END = 21 * 60;
+const inWindow = t => { const m = minutesOf(t); return m >= WIN_START && m <= WIN_END; };
+const dayKey = t => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date(t));
+const fmtTime = t => { const p = parts(t, { hour: '2-digit', minute: '2-digit', second: '2-digit' }); return `${p.hour}:${p.minute}:${p.second}`; };
+const fmtDate = t => new Intl.DateTimeFormat('ar', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(t));
+
+function renderClock() {
+  const t = now();
+  if (t == null) {
+    $('clock').textContent = '--:--:--';
+    $('date').textContent = '—';
+    $('sync').innerHTML = '<span class="err">تعذّر الاتصال لتأكيد توقيت بغداد</span>';
+    $('win').className = 'badge closed'; $('win').textContent = 'بانتظار التوقيت';
+  } else {
+    $('clock').textContent = fmtTime(t);
+    $('date').textContent = fmtDate(t);
+    $('sync').textContent = 'توقيت بغداد · موثّق من الخادم';
+    const open = inWindow(t);
+    $('win').className = 'badge ' + (open ? 'open' : 'closed');
+    $('win').textContent = open ? 'باب التسجيل مفتوح (3:30 – 9:00 م)' : 'التسجيل مغلق حالياً';
+  }
+  refreshAction();
+}
+
+/* ================= الموظفون والسجل ================= */
+const getEmps = () => DB.get('bp_emp', []);
+const saveEmps = v => DB.set('bp_emp', v);
+const getRecs = () => DB.get('bp_rec', []);
+
+function populateSelect() {
+  const sel = $('emp'), cur = sel.value;
+  sel.innerHTML = '<option value="">— اختر الموظف —</option>' +
+    getEmps().map(e => `<option value="${esc(e.id)}">${esc(e.name)}</option>`).join('');
+  sel.value = cur;
+}
+
+function todayRecs(empId) {
+  const t = now(); if (t == null) return [];
+  const k = dayKey(t);
+  return getRecs().filter(r => r.empId === empId && dayKey(r.tsMs) === k);
+}
+function nextType(empId) {
+  const list = todayRecs(empId);
+  return list.length && list[list.length - 1].type === 'in' ? 'out' : 'in';
+}
+const typeLabel = t => t === 'in' ? 'حضور' : 'انصراف';
+
+function renderToday() {
+  const sel = $('emp').value;
+  const box = $('today');
+  if (!sel) { box.innerHTML = '<p class="small">اختر موظفاً لعرض سجله اليوم.</p>'; return; }
+  const list = todayRecs(sel);
+  box.innerHTML = list.length ? list.map(r => `
+    <div class="row"><div>${esc(r.emp)}<small>${esc(r.bgTime)}</small></div>
+    <span class="tag ${r.type}">${typeLabel(r.type)}</span></div>`).join('')
+    : '<p class="small">لا توجد سجلات لهذا الموظف اليوم.</p>';
+}
+
+/* ================= واجهة التسجيل ================= */
+let fpAvail = false;
+(async () => {
+  try { fpAvail = !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); }
+  catch { fpAvail = false; }
+})();
+
+function refreshAction() {
+  const id = $('emp').value;
+  const t = now();
+  const ready = id && t != null && inWindow(t);
+  const emp = getEmps().find(e => e.id === id);
+  $('action').classList.toggle('hidden', !id);
+  if (id && emp) {
+    const type = nextType(id);
+    $('actInfo').textContent = `العملية التالية: ${typeLabel(type)}`;
+    const useFp = fpAvail && !!emp.cred;
+    $('fpBox').classList.toggle('hidden', !useFp);
+    $('pinOr').classList.toggle('hidden', !useFp);
+    $('pinBox').classList.remove('hidden');
+    $('fpGo').disabled = !ready; $('pinGo').disabled = !ready; $('pin').disabled = !ready;
+    if (!ready && t != null) $('actInfo').textContent += ' — خارج أوقات التسجيل';
+  }
+  renderToday();
+}
+
+function say(text, cls = '') { $('msg').className = 'msg ' + cls; $('msg').textContent = text; }
+
+async function verifyFp(emp) {
+  const cred = await navigator.credentials.get({
+    publicKey: { challenge: rnd(32), allowCredentials: [{ type: 'public-key', id: b64ToBuf(emp.cred) }],
+      userVerification: 'required', timeout: 60000 }
+  });
+  return !!cred;
+}
+
+async function verifyPin(emp, pin) {
+  return (await sha(emp.id + ':' + pin)) === emp.pin;
+}
+
+let pending = null;
+async function startFlow(emp, method) {
+  const t = now();
+  if (t == null || !inWindow(t)) return say('التسجيل غير متاح في هذا الوقت', 'err');
+  pending = { emp, type: nextType(emp.id), method, loc: 'غير متاح' };
+  $('empCard').classList.add('hidden');
+  $('camCard').classList.remove('hidden');
+  getLoc().then(l => { if (pending) pending.loc = l; });
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+    $('vid').srcObject = stream;
+  } catch {
+    cancelFlow();
+    say('لا يمكن تشغيل الكاميرا. يجب السماح بالكاميرا لإتمام التسجيل.', 'err');
+  }
+}
+
+let stream = null;
+function stopCam() { if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; $('vid').srcObject = null; }
+function cancelFlow() {
+  pending = null; stopCam();
+  $('camCard').classList.add('hidden');
+  $('empCard').classList.remove('hidden');
+}
+
+function getLoc() {
+  return new Promise(res => {
+    if (!navigator.geolocation) return res('غير متاح');
+    navigator.geolocation.getCurrentPosition(
+      p => res(`${p.coords.latitude.toFixed(6)},${p.coords.longitude.toFixed(6)}`),
+      () => res('غير متاح'), { enableHighAccuracy: true, timeout: 10000 });
+  });
+}
+
+function dataUrlToBlob(du) {
+  const [h, b64] = du.split(',');
+  const mime = h.match(/:(.*?);/)[1];
+  return new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type: mime });
+}
+
+$('snap').onclick = async () => {
+  if (!pending) return;
+  const t = now();
+  if (t == null || !inWindow(t)) return say('انتهى وقت التسجيل', 'err');
+  const v = $('vid'), cv = $('cv'), ctx = cv.getContext('2d');
+  if (!v.videoWidth) return say('الكاميرا غير جاهزة بعد', 'err');
+  const W = 480, H = Math.round(v.videoHeight * W / v.videoWidth);
+  cv.width = W; cv.height = H;
+  ctx.save(); ctx.translate(W, 0); ctx.scale(-1, 1); ctx.drawImage(v, 0, 0, W, H); ctx.restore();
+  // شريط التوثيق
+  const g = ctx.createLinearGradient(0, H - 78, 0, H);
+  g.addColorStop(0, 'rgba(11,29,51,0)'); g.addColorStop(1, 'rgba(11,29,51,.92)');
+  ctx.fillStyle = g; ctx.fillRect(0, H - 78, W, 78);
+  ctx.fillStyle = '#e8cf96'; ctx.font = 'bold 20px Tahoma,sans-serif'; ctx.textAlign = 'right';
+  ctx.fillText(`${pending.emp.name} · ${typeLabel(pending.type)}`, W - 14, H - 44);
+  ctx.fillStyle = '#f4efe4'; ctx.font = '16px Tahoma,sans-serif';
+  ctx.fillText(`${fmtDate(t)} · ${fmtTime(t)} (بغداد)`, W - 14, H - 18);
+
+  const photo = cv.toDataURL('image/jpeg', 0.7);
+  const blob = dataUrlToBlob(photo);
+  stopCam();
+  await commit(photo, blob, t);
+};
+$('cancel').onclick = () => { cancelFlow(); say('أُلغيت العملية', ''); };
+
+async function commit(photo, blob, t) {
+  const p = pending;
+  const recs = getRecs();
+  const prev = recs.length ? recs[recs.length - 1].h : 'GENESIS';
+  const rec = {
+    id: uid(), empId: p.emp.id, emp: p.emp.name, type: p.type, method: p.method,
+    tsMs: t, ts: new Date(t).toISOString(), bgTime: `${fmtDate(t)} ${fmtTime(t)}`,
+    loc: p.loc, photo, prevHash: prev,
+  };
+  rec.ph = await sha(photo);
+  rec.h = await sha(prev + JSON.stringify({ ...rec, photo: undefined }));
+  recs.push(rec);
+  DB.set('bp_rec', recs);
+  pending = null;
+  $('camCard').classList.add('hidden');
+  $('empCard').classList.remove('hidden');
+  $('emp').value = ''; $('pin').value = '';
+  refreshAction();
+  say(`تم تسجيل ${typeLabel(rec.type)} بنجاح · ${fmtTime(t)}`, 'ok');
+  await sendToWhatsApp(rec, blob);
+}
+
+const WA_NUMBER = '9647830697575';
+async function sendToWhatsApp(rec, blob) {
+  const text = `بصمتي · مختبر الأسرة\n${rec.emp}\n${typeLabel(rec.type)}\nالوقت (بغداد): ${rec.bgTime}\nالموقع: ${rec.loc === 'غير متاح' ? rec.loc : 'https://maps.google.com/?q=' + rec.loc}`;
+  const file = new File([blob], `attendance-${rec.id}.jpg`, { type: 'image/jpeg' });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], text, title: 'بصمتي' });
+      return;
+    }
+  } catch { /* يُكمل إلى الرابط */ }
+  window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
+}
+
+/* ================= أحداث الواجهة ================= */
+$('emp').onchange = () => { say(''); refreshAction(); };
+$('fpGo').onclick = async () => {
+  const emp = getEmps().find(e => e.id === $('emp').value);
+  if (!emp) return;
+  try {
+    if (await verifyFp(emp)) startFlow(emp, 'fingerprint');
+    else say('لم تُؤكَّد البصمة', 'err');
+  } catch { say('تعذّر التحقق بالبصمة، استخدم الرمز السري', 'err'); }
+};
+$('pinGo').onclick = async () => {
+  const emp = getEmps().find(e => e.id === $('emp').value);
+  if (!emp) return;
+  const pin = $('pin').value.trim();
+  if (!pin) return say('أدخل الرمز السري', 'err');
+  if (await verifyPin(emp, pin)) startFlow(emp, 'pin');
+  else say('الرمز السري غير صحيح', 'err');
+};
+$('pin').addEventListener('keydown', e => { if (e.key === 'Enter') $('pinGo').click(); });
+
+/* ================= لوحة التحكم ================= */
+const ADMIN_KEY = 'bp_admin';
+$('adminBtn').onclick = () => {
+  $('admin').classList.remove('hidden');
+  const hasPw = !!DB.get(ADMIN_KEY, null);
+  $('setup').classList.toggle('hidden', hasPw);
+  $('login').classList.toggle('hidden', !hasPw);
+  $('panel').classList.add('hidden');
+};
+$('closeAdmin').onclick = () => { $('admin').classList.add('hidden'); $('apw').value = ''; };
+
+$('setupGo').onclick = async () => {
+  const a = $('apw1').value, b = $('apw2').value;
+  if (a.length < 6) return alert('كلمة المرور يجب ألا تقل عن 6 أحرف');
+  if (a !== b) return alert('كلمتا المرور غير متطابقتين');
+  DB.set(ADMIN_KEY, { h: await sha('admin:' + a) });
+  $('setup').classList.add('hidden'); $('login').classList.remove('hidden');
+};
+$('loginGo').onclick = async () => {
+  const stored = DB.get(ADMIN_KEY, null);
+  if (stored && (await sha('admin:' + $('apw').value)) === stored.h) {
+    $('login').classList.add('hidden'); $('panel').classList.remove('hidden');
+    $('loginMsg').textContent = ''; renderAdmin();
+  } else $('loginMsg').textContent = 'كلمة المرور غير صحيحة';
+};
+
+function renderAdmin() {
+  $('empList').innerHTML = getEmps().length ? getEmps().map(e => `
+    <div class="row"><div>${esc(e.name)}<small>${e.cred ? 'البصمة مسجّلة ✓' : 'بدون بصمة (رمز سري فقط)'}</small></div>
+      <div style="display:flex;gap:6px">
+        ${fpAvail ? `<button class="ghost" style="width:auto;padding:8px 10px;margin:0" data-fp="${e.id}">بصمة</button>` : ''}
+        <button class="ghost" style="width:auto;padding:8px 10px;margin:0" data-pin="${e.id}">الرمز</button>
+        <button class="danger" style="width:auto;padding:8px 10px;margin:0" data-del="${e.id}">حذف</button>
+      </div></div>`).join('') : '<p class="small">لا يوجد موظفون بعد.</p>';
+
+  const recs = getRecs().slice().reverse().slice(0, 100);
+  $('recList').innerHTML = recs.length ? recs.map(r => `
+    <div class="row">
+      ${r.photo ? `<img class="thumb" src="${r.photo}">` : ''}
+      <div style="flex:1">${esc(r.emp)} <span class="tag ${r.type}">${typeLabel(r.type)}</span>
+        <small>${esc(r.bgTime)} · ${r.method === 'fingerprint' ? 'بصمة' : 'رمز'}</small></div>
+    </div>`).join('') : '<p class="small">لا توجد سجلات.</p>';
+
+  $('empList').querySelectorAll('[data-pin]').forEach(b => b.onclick = async () => {
+    const pin = prompt('الرمز السري الجديد للموظف:'); if (!pin) return;
+    const list = getEmps(), e = list.find(x => x.id === b.dataset.pin);
+    e.pin = await sha(e.id + ':' + pin); saveEmps(list); alert('تم تحديث الرمز');
+  });
+  $('empList').querySelectorAll('[data-fp]').forEach(b => b.onclick = async () => {
+    const list = getEmps(), e = list.find(x => x.id === b.dataset.fp);
+    try {
+      const c = await navigator.credentials.create({ publicKey: {
+        challenge: rnd(32), rp: { name: 'بصمتي' },
+        user: { id: enc.encode(e.id), name: e.name, displayName: e.name },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' },
+        timeout: 60000, attestation: 'none' } });
+      e.cred = bufToB64(c.rawId); saveEmps(list); populateSelect(); renderAdmin();
+      alert('تم تسجيل البصمة على هذا الجهاز');
+    } catch { alert('تعذّر تسجيل البصمة'); }
+  });
+  $('empList').querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+    if (!confirm('حذف هذا الموظف؟ (يبقى سجله محفوظاً)')) return;
+    saveEmps(getEmps().filter(x => x.id !== b.dataset.del)); populateSelect(); renderAdmin(); refreshAction();
+  });
+}
+
+$('addEmp').onclick = async () => {
+  const name = $('newName').value.trim(), pin = $('newPin').value.trim();
+  if (!name || pin.length < 4) return alert('أدخل الاسم ورمزاً سرياً من 4 أرقام على الأقل');
+  const id = uid();
+  const list = getEmps();
+  list.push({ id, name, pin: await sha(id + ':' + pin), cred: null, createdAt: Date.now() });
+  saveEmps(list); $('newName').value = ''; $('newPin').value = '';
+  populateSelect(); renderAdmin();
+};
+
+$('verifyChain').onclick = async () => {
+  const recs = getRecs(); let prev = 'GENESIS', bad = -1;
+  for (let i = 0; i < recs.length; i++) {
+    const r = recs[i];
+    const h = await sha(prev + JSON.stringify({ ...r, photo: undefined, h: undefined }));
+    if (r.prevHash !== prev || r.h !== h || (await sha(r.photo)) !== r.ph) { bad = i; break; }
+    prev = r.h;
+  }
+  $('chainMsg').className = 'msg ' + (bad < 0 ? 'ok' : 'err');
+  $('chainMsg').textContent = bad < 0 ? `السجل سليم · ${recs.length} سجل لم يُعبث به` : `تم اكتشاف تعديل عند السجل رقم ${bad + 1}`;
+};
+
+$('exportCsv').onclick = () => {
+  const rows = [['الموظف', 'العملية', 'الوقت (بغداد)', 'الطريقة', 'الموقع', 'ISO']];
+  getRecs().forEach(r => rows.push([r.emp, typeLabel(r.type), r.bgTime, r.method, r.loc, r.ts]));
+  const csv = '\uFEFF' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'basmati-attendance.csv'; a.click();
+};
+
+$('changePw').onclick = async () => {
+  const pw = $('npw').value;
+  if (pw.length < 6) return alert('كلمة المرور قصيرة (6 أحرف على الأقل)');
+  DB.set(ADMIN_KEY, { h: await sha('admin:' + pw) }); $('npw').value = '';
+  alert('تم تغيير كلمة المرور');
+};
+
+/* ================= قسم الرواتب (محمي بالرمز السري) ================= */
+const SALARY_CODE = 'gmc#97939#';
+const getSal = () => DB.get('bp_sal', { rate: 0, absMin: 0 });
+const shiftDay = (s, n) => { const [y, m, d] = s.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
+const isFriday = s => { const [y, m, d] = s.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)).getUTCDay() === 5; };
+const money = n => Number(n).toLocaleString('en', { maximumFractionDigits: 0 });
+const hm = min => `${Math.floor(min / 60)}س ${Math.round(min % 60)}د`;
+
+function openSalary() {
+  $('panel').classList.add('hidden');
+  $('salaryPanel').classList.remove('hidden');
+  $('saLock').classList.remove('hidden');
+  $('saBody').classList.add('hidden');
+  $('saCode').value = ''; $('saMsg').textContent = '';
+}
+$('tabSal').onclick = openSalary;
+['tabStaff', 'tabStaff2'].forEach(id => $(id).onclick = () => {
+  $('salaryPanel').classList.add('hidden');
+  $('panel').classList.remove('hidden');
+  renderAdmin();
+});
+
+$('saGo').onclick = () => {
+  if ($('saCode').value.trim() !== SALARY_CODE) { $('saMsg').textContent = 'الرمز السري غير صحيح'; return; }
+  $('saLock').classList.add('hidden');
+  $('saBody').classList.remove('hidden');
+  const s = getSal();
+  $('saRate').value = s.rate || ''; $('saAbsMin').value = s.absMin || '';
+  const t = now();
+  if (!$('saDate').value && t != null) $('saDate').value = dayKey(t);
+};
+$('saSave').onclick = () => {
+  DB.set('bp_sal', {
+    rate: Math.max(0, parseFloat($('saRate').value) || 0),
+    absMin: Math.max(0, parseFloat($('saAbsMin').value) || 0),
+  });
+  alert('تم حفظ الإعدادات');
+};
+
+function computeSalary(periodType, D) {
+  const t = now();
+  if (t == null) return { error: 'التوقيت غير متاح، تعذّر الحساب' };
+  const today = dayKey(t);
+  const [y, m] = D.split('-').map(Number);
+  let days = [];
+  if (periodType === 'day') days = [D];
+  else if (periodType === 'week') for (let i = 6; i >= 0; i--) days.push(shiftDay(D, -i));
+  else {
+    const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    for (let i = 1; i <= last; i++) days.push(`${y}-${String(m).padStart(2, '0')}-${String(i).padStart(2, '0')}`);
+  }
+  days = days.filter(d => d <= today);
+  const sal = getSal();
+  const recs = getRecs();
+  const rows = getEmps().map(e => {
+    const mine = recs.filter(r => r.empId === e.id).sort((a, b) => a.tsMs - b.tsMs);
+    const byDay = {};
+    mine.forEach(r => { const k = dayKey(r.tsMs); (byDay[k] = byDay[k] || []).push(r); });
+    const firstDay = e.createdAt ? dayKey(e.createdAt) : (mine.length ? dayKey(mine[0].tsMs) : null);
+    let minutes = 0, presentDays = 0, openPunches = 0;
+    const absent = [];
+    for (const day of days) {
+      const list = byDay[day] || [];
+      if (list.length) presentDays++;
+      let pend = null;
+      for (const r of list) {
+        if (r.type === 'in') { if (pend) openPunches++; pend = r; }
+        else if (pend) { minutes += (r.tsMs - pend.tsMs) / 60000; pend = null; }
+        else openPunches++;
+      }
+      if (pend) openPunches++;
+      if (!list.length && firstDay && day >= firstDay && day < today && !isFriday(day)) absent.push(day);
+    }
+    minutes = Math.round(minutes);
+    const work = minutes * sal.rate;
+    const deduction = absent.length * sal.absMin * sal.rate;
+    return { name: e.name, minutes, presentDays, openPunches, absent, work, deduction, net: Math.max(0, work - deduction) };
+  });
+  return { rows, days };
+}
+
+$('saCalc').onclick = () => {
+  const D = $('saDate').value;
+  if (!D) return alert('اختر التاريخ');
+  const res = computeSalary($('saPeriod').value, D);
+  const out = $('saOut');
+  if (res.error) { out.innerHTML = `<p class="small err">${res.error}</p>`; return; }
+  const sal = getSal();
+  const warn = sal.rate ? '' : '<p class="small err">لم تحدد سعر الدقيقة بعد، المبالغ صفر.</p>';
+  if (!res.rows.length) { out.innerHTML = '<p class="small">لا يوجد موظفون.</p>'; return; }
+  const total = res.rows.reduce((s, r) => s + r.net, 0);
+  out.innerHTML = warn + res.rows.map(r => `
+    <div class="row" style="display:block">
+      <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px">
+        <span>${esc(r.name)}</span><span style="color:var(--gold2)">${money(r.net)}</span></div>
+      <div class="small">
+        مدة العمل: ${hm(r.minutes)} (${r.minutes} دقيقة) · أيام الحضور: ${r.presentDays}<br>
+        أيام الغياب: ${r.absent.length}${r.absent.length ? ' (' + r.absent.map(d => d.slice(5)).join('، ') + ')' : ''}
+        ${r.deduction ? ' · خصم الغياب: ' + money(r.deduction) : ''}<br>
+        قيمة العمل: ${money(r.work)}
+        ${r.openPunches ? `<br><span class="err">⚠ ${r.openPunches} تسجيل غير مكتمل (حضور بلا انصراف أو العكس) لم يُحتسب</span>` : ''}
+      </div>
+    </div>`).join('') +
+    `<div class="row" style="font-weight:700"><span>إجمالي الصافي</span><span style="color:var(--gold2)">${money(total)}</span></div>`;
+};
+
+/* ================= التشغيل ================= */
+populateSelect();
+syncTime();
+setInterval(renderClock, 1000);
+setInterval(syncTime, 5 * 60 * 1000);
+</script>
+</body>
+</html>
